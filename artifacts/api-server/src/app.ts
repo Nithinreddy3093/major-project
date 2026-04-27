@@ -5,6 +5,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+const frontendUrl = process.env.PUBLIC_WEB_URL?.trim();
 
 app.use(
   pinoHttp({
@@ -85,7 +86,11 @@ app.get("/", (_req, res) => {
       <ul>
         <li><a href="/api/healthz"><code>/api/healthz</code></a> for a health check</li>
         <li><a href="/api/stats"><code>/api/stats</code></a> for detection statistics</li>
-        <li><a href="http://127.0.0.1:22772/">frontend app on port <code>22772</code></a></li>
+        ${
+          frontendUrl
+            ? `<li><a href="${frontendUrl}">frontend app</a></li>`
+            : `<li>Set <code>PUBLIC_WEB_URL</code> to show a frontend link here.</li>`
+        }
       </ul>
     </main>
   </body>
