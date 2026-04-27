@@ -1,0 +1,245 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.2.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: phishing
+    description: Phishing detection operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /predict:
+    post:
+      operationId: predictPhishing
+      tags: [phishing]
+      summary: Analyze email for phishing, AI-generated content, or legitimacy
+      description: Runs hybrid 3-class classification on email text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PredictRequest"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /history:
+    get:
+      operationId: getPredictionHistory
+      tags: [phishing]
+      summary: Get recent prediction history
+      description: Returns the last N predictions made
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: List of recent predictions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HistoryResponse"
+  /stats:
+    get:
+      operationId: getStats
+      tags: [phishing]
+      summary: Get detection statistics
+      description: Returns aggregate stats about all analyzed emails
+      responses:
+        "200":
+          description: Detection statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsResponse"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    PredictRequest:
+      type: object
+      properties:
+        text:
+          type: string
+          description: The email text to analyze
+      required:
+        - text
+    PredictResponse:
+      type: object
+      properties:
+        prediction:
+          type: string
+          enum: [Legitimate, AI-Generated Suspicious, Phishing]
+        confidence:
+          type: number
+          description: Confidence percentage (0–100)
+        threat_level:
+          type: string
+          enum: [None, Low, Medium, High, Critical]
+        ml_score:
+          type: number
+          description: ML model score (0–100)
+        rule_score:
+          type: number
+          description: Rule-based keyword score (0–100)
+        ai_score:
+          type: number
+          description: AI-generated content detection score (0–100)
+        keywords:
+          type: array
+          items:
+            type: string
+          description: Suspicious phishing keywords found
+        urls:
+          type: array
+          items:
+            type: string
+          description: URLs extracted from the email
+        tone:
+          type: string
+          description: Detected tone of the email
+        explanation:
+          type: string
+          description: Human-readable explanation of the verdict
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Actionable recommendations based on the prediction
+      required:
+        - prediction
+        - confidence
+        - threat_level
+        - ml_score
+        - rule_score
+        - ai_score
+        - keywords
+        - urls
+        - tone
+        - explanation
+        - suggestions
+    HistoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        text_preview:
+          type: string
+        prediction:
+          type: string
+          enum: [Legitimate, AI-Generated Suspicious, Phishing]
+        confidence:
+          type: number
+        threat_level:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        urls:
+          type: array
+          items:
+            type: string
+        tone:
+          type: string
+        ml_score:
+          type: number
+        rule_score:
+          type: number
+        ai_score:
+          type: number
+        created_at:
+          type: string
+      required:
+        - id
+        - text_preview
+        - prediction
+        - confidence
+        - threat_level
+        - keywords
+        - urls
+        - tone
+        - ml_score
+        - rule_score
+        - ai_score
+        - created_at
+    HistoryResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/HistoryItem"
+      required:
+        - items
+    StatsResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        phishing_count:
+          type: integer
+        ai_suspicious_count:
+          type: integer
+        legitimate_count:
+          type: integer
+        phishing_rate:
+          type: number
+        ai_suspicious_rate:
+          type: number
+        avg_confidence:
+          type: number
+        avg_ai_score:
+          type: number
+      required:
+        - total
+        - phishing_count
+        - ai_suspicious_count
+        - legitimate_count
+        - phishing_rate
+        - ai_suspicious_rate
+        - avg_confidence
+        - avg_ai_score
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
